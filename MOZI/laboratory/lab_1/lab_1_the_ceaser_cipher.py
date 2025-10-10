@@ -6,145 +6,199 @@ def isRussia(letter: str) -> bool:
     return 1040 <= ord(letter) <= 1103
 
 def encryption(text: str, k: int) -> str:
-    result = ''
-    for i in range(len(text)):
-        letter = text[i]
-        if not isRussia(letter) or letter in EXCEPTIONS:
-            result += letter
-            continue
-        elif letter.islower():
-            result += chr(ord('а') + (ord(letter) + k - ord('а')) % 32)
+    out = []
+    for ch in text:
+        if not isRussia(ch) or ch in EXCEPTIONS:
+            out.append(ch)
+        elif ch.islower():
+            out.append(chr(ord('а') + (ord(ch) + k - ord('а')) % 32))
         else:
-            result += chr(ord('А') + (ord(letter) + k - ord('А')) % 32)
-    return result
+            out.append(chr(ord('А') + (ord(ch) + k - ord('А')) % 32))
+    return "".join(out)
 
-def decrypt_enumeration(text):
-    result = {}
+def decrypt_enumeration(text: str):
+    res = {}
     for k in range(1, 32):
-        result[k] = ''
-        for i in range(len(text)):
-            letter = text[i]
-            if not isRussia(letter) or letter in EXCEPTIONS:
-                result[k] += letter
-                continue
-            elif letter.islower():
-                result[k] += chr(ord('я') - (ord('я') - ord(letter) + k) % 32)
+        out = []
+        for ch in text:
+            if not isRussia(ch) or ch in EXCEPTIONS:
+                out.append(ch)
+            elif ch.islower():
+                out.append(chr(ord('я') - (ord('я') - ord(ch) + k) % 32))
             else:
-                result[k] += chr(ord('Я') - (ord('Я') - ord(letter) + k) % 32)
-    return result
+                out.append(chr(ord('Я') - (ord('Я') - ord(ch) + k) % 32))
+        res[k] = "".join(out)
+    return res
 
 def decrypt(text: str, k: int=None):
-    result = ''
-    if (k is None): 
-        result = decrypt_enumeration(text)
-    else:
-        for i in range(len(text)):
-            letter = text[i]
-            if not isRussia(letter) or letter in EXCEPTIONS:
-                result += letter
-                continue
-            elif letter.islower():
-                result += chr(ord('я') - (ord('я') - ord(letter) + k) % 32)
-            else:
-                result += chr(ord('Я') - (ord('Я') - ord(letter) + k) % 32)
-    return result
-
-def get_shift(action: str):
-    if action == "Шифровка":
-        shift = st.number_input(
-            label='Шаг от 1 до 31',
-            min_value=1, max_value=31, step=1,
-            key="enc_shift"
-        )
-        return int(shift)
-    else:
-        use_step = st.checkbox("Выбрать шаг", value=False, key="dec_use_step")
-        if use_step:
-            shift = st.number_input(
-                label='Шаг от 1 до 31',
-                min_value=1, max_value=31, step=1,
-                key="dec_shift"
-            )
-            return int(shift)
+    if k is None:
+        return decrypt_enumeration(text)
+    out = []
+    for ch in text:
+        if not isRussia(ch) or ch in EXCEPTIONS:
+            out.append(ch)
+        elif ch.islower():
+            out.append(chr(ord('я') - (ord('я') - ord(ch) + k) % 32))
         else:
-            return None
+            out.append(chr(ord('Я') - (ord('Я') - ord(ch) + k) % 32))
+    return "".join(out)
+
+def validate_inputs(action: str, text: str, shift):
+    ok = True
+    if not text.strip():
+        st.error("Введите текст.")
+        ok = False
+    elif not any(isRussia(c) for c in text):
+        st.warning("В тексте нет русских букв — результат может быть бессмысленным.")
+    if action in ("Шифровка", "Расшифровка") and shift is not None:
+        try:
+            k = int(shift)
+        except Exception:
+            st.error("Шаг должен быть целым числом.")
+            return False
+        if not (1 <= k <= 31):
+            st.error("Шаг вне диапазона. Допустимо 1–31.")
+            ok = False
+    return ok
 
 def main_page():
-    st.set_page_config(
-        page_title="Шифр Цезаря",
-        page_icon="🔑",
-        layout="centered"
-    )
+    st.set_page_config(page_title="Шифр Цезаря", page_icon="🔑", layout="centered")
     st.title("Шифр Цезаря")
 
-    if "dec_variants" not in st.session_state:
-        st.session_state.dec_variants = {}
-    if "last_text_for_variants" not in st.session_state:
-        st.session_state.last_text_for_variants = ""
+    ss = st.session_state
+    # --- INIT STATE ---
+    ss.setdefault("dec_variants", {})                       # накопленные расшифровки с выбранными ключами
+    ss.setdefault("last_text_for_variants", "")             # чтобы сбрасывать накопления при смене текста
+    ss.setdefault("enum_results", {})                       # результаты перебора всех ключей
+    ss.setdefault("enum_active", False)                     # показывать ли панель перебора
+    ss.setdefault("enum_text_snapshot", "")                 # текст, по которому считали перебор
+    ss.setdefault("enum_selected_key", 1)                   # выбранный ключ в selectbox
+    ss.setdefault("dec_use_step_prev", False)               # предыдущее состояние чекбокса "ручной шаг"
+    ss.setdefault("last_enc", {"text": "", "shift": None, "result": ""})  # последний валидный результат шифровки
+    ss.setdefault("enc_ready", False)                       # флаг разрешения показа результата шифровки
 
+    # --- INPUT: текст ---
     user_text = st.text_area("Введите текст:").replace('ё', 'е').replace('Ё', 'Е')
 
-    if user_text != st.session_state.last_text_for_variants:
-        st.session_state.dec_variants = {}
-        st.session_state.last_text_for_variants = user_text
+    # Сброс накопленных вариантов при смене текста
+    if user_text != ss.last_text_for_variants:
+        ss.dec_variants = {}
+        ss.last_text_for_variants = user_text
+    # Сброс панели перебора при смене текста
+    if user_text != ss.enum_text_snapshot:
+        ss.enum_active = False
+        ss.enum_results = {}
+        ss.enum_selected_key = 1
+        ss.enum_text_snapshot = user_text
+    # Не показываем старый шифр, если изменился текст
+    if user_text != ss.last_enc.get("text", ""):
+        ss.enc_ready = False
 
+    # --- Режим ---
     action = st.selectbox("Выберите действие:", ("Шифровка", "Расшифровка"))
-    shift = get_shift(action)
 
-    if action == "Расшифровка" and shift is not None:
-        if st.button("Очистить накопленные варианты", key="clear_variants_btn"):
-            st.session_state.dec_variants = {}
+    # Для расшифровки: мгновенное управление панелью перебора чекбоксом
+    use_step = False
+    if action == "Расшифровка":
+        use_step = st.checkbox("Выбрать шаг вручную", value=False, key="dec_use_step")
+        if use_step != ss.dec_use_step_prev:
+            ss.dec_use_step_prev = use_step
+            if use_step:
+                # Включили ручной шаг — мгновенно скрываем перебор
+                ss.enum_active = False
+                ss.enum_results = {}
+                ss.enum_selected_key = 1
+
+    # --- ФОРМА: атомарный сабмит + валидные значения шага через слайдер ---
+    with st.form("cipher_form", clear_on_submit=False):
+        shift_val = None
+        if action == "Шифровка":
+            shift_val = st.slider("Шаг (1–31)", min_value=1, max_value=31, value=1, step=1, key="enc_shift")
+        elif action == "Расшифровка" and use_step:
+            shift_val = st.slider("Шаг (1–31)", min_value=1, max_value=31, value=1, step=1, key="dec_shift")
+
+        # live-валидация перед сабмитом
+        text_ok = bool(user_text.strip())
+        shift_needed = (action == "Шифровка") or (action == "Расшифровка" and use_step)
+        shift_ok = (not shift_needed) or (shift_val is not None and 1 <= int(shift_val) <= 31)
+
+        submitted = st.form_submit_button(
+            action,
+            disabled=not (text_ok and shift_ok)
+        )
+
+    # Кнопка очистки — только если есть накопленные варианты
+    if action == "Расшифровка" and use_step and ss.dec_variants:
+        if st.button("Очистить накопленные варианты"):
+            ss.dec_variants = {}
             st.info("Список вариантов очищен.")
 
-    if st.button(action, key="do_action_btn"):
-        file_name = None
-        file_content = None
+    # --- ОБРАБОТКА сабмита формы ---
+    if submitted:
+        if not validate_inputs(action, user_text, shift_val if shift_needed else None):
+            ss.enc_ready = False
+            st.stop()
 
         if action == "Шифровка":
-            result = encryption(user_text, shift)
-            file_name = "Шифр_Цезаря_Шифровка.txt"
-            file_content = (
-                "Результат шифрования (Цезарь)\n"
-                f"Исходный текст (ОТ):\n{user_text}\n\n"
-                f"Ключ: {shift}\n\n"
-                f"Зашифрованный текст (ШТ):\n{result}\n"
-            )
-            st.success("Текст зашифрован. Файл готов к скачиванию.")
+            k = int(shift_val)  # slider гарантирует 1..31
+            result = encryption(user_text, k)
+            ss.last_enc = {"text": user_text, "shift": k, "result": result}
+            ss.enc_ready = True
 
-        else:
-            if shift is None:
-                all_results = decrypt(user_text, None)
-                file_name = "Шифр_Цезаря_Расшифровка_Все_Ключи.txt"
-                lines = [
-                    "Результат расшифровки (перебор ключей)",
-                    f"ШИФР-ТЕКСТ (ШТ):\n{user_text}\n"
-                ]
-                for k in range(1, 32):
-                    lines.append(f"Ключ: {k}")
-                    lines.append(f"РАСШИФРОВАННЫЙ ТЕКСТ (ОТ): {all_results[k]}")
-                    lines.append("")
-                file_content = "\n".join(lines)
-                st.info("Расшифровка перебором выполнена. Файл готов к скачиванию.")
+        else:  # Расшифровка
+            if not use_step:
+                # Перебор всех ключей, включаем панель
+                ss.enum_results = decrypt(user_text, None)
+                ss.enum_active = True
+                ss.enum_selected_key = 1 if 1 in ss.enum_results else list(ss.enum_results.keys())[0]
             else:
-                st.session_state.dec_variants[shift] = decrypt(user_text, shift)
+                k = int(shift_val)  # slider гарантирует 1..31
+                ss.dec_variants[k] = decrypt(user_text, k)
 
-                file_name = "Шифр_Цезаря_Расшифровка.txt"
-                lines = [
-                    "Результаты расшифровки (выбранные ключи)",
-                    f"ШИФР-ТЕКСТ (ШТ):\n{user_text}\n"
-                ]
-                for k in sorted(st.session_state.dec_variants.keys()):
-                    lines.append(f"Ключ: {k}")
-                    lines.append(f"РАСШИФРОВАННЫЙ ТЕКСТ (ОТ): {st.session_state.dec_variants[k]}")
-                    lines.append("")
-                file_content = "\n".join(lines)
-                st.success("Вариант добавлен/обновлён. Файл готов к скачиванию.")
+    # --- ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ (вне формы) ---
 
-        if file_content and file_name:
-            st.download_button(
-                label="Скачать файл",
-                data=file_content,
-                file_name=file_name,
-                mime="text/plain",
-                key="download_btn"
-            )
+    # Шифровка — только после валидного сабмита
+    if action == "Шифровка" and ss.enc_ready and ss.last_enc["text"] == user_text:
+        st.subheader("🔐 Зашифрованный текст:")
+        st.code(ss.last_enc["result"], language="text")
+        st.download_button(
+            "Скачать результат",
+            data=f"Исходный текст:\n{ss.last_enc['text']}\n\nКлюч: {ss.last_enc['shift']}\n\nЗашифрованный:\n{ss.last_enc['result']}",
+            file_name="Шифр_Цезаря_Шифровка.txt",
+            mime="text/plain",
+        )
+
+    # Расшифровка перебором — только если ручной шаг выключен и перебор активирован
+    if action == "Расшифровка" and not use_step and ss.enum_active and ss.enum_results:
+        st.subheader("🔍 Результаты расшифровки (перебор всех ключей):")
+        keys_list = list(ss.enum_results.keys())
+        ss.enum_selected_key = st.selectbox(
+            "Выберите ключ для просмотра:",
+            options=keys_list,
+            index=keys_list.index(ss.enum_selected_key) if ss.enum_selected_key in keys_list else 0,
+            format_func=lambda x: f"Ключ {x}",
+            key="enum_selectbox_key"
+        )
+        st.markdown(f"**Ключ {ss.enum_selected_key}:**")
+        st.code(ss.enum_results[ss.enum_selected_key], language="text")
+        st.download_button(
+            "Скачать все варианты",
+            data="\n".join([f"Ключ {k}:\n{txt}\n" for k, txt in ss.enum_results.items()]),
+            file_name="Шифр_Цезаря_Расшифровка_Все_Ключи.txt",
+            mime="text/plain",
+            key="dl_enum_all"
+        )
+
+    # Расшифровка с выбранными шагами — показываем накопленные варианты
+    if action == "Расшифровка" and use_step and ss.dec_variants:
+        st.subheader("🔓 Расшифрованный текст (по выбранным ключам):")
+        for k in sorted(ss.dec_variants.keys()):
+            st.markdown(f"**Ключ {k}:**")
+            st.code(ss.dec_variants[k], language="text")
+        st.download_button(
+            "Скачать выбранные варианты",
+            data="\n".join([f"Ключ {k}:\n{txt}\n" for k, txt in ss.dec_variants.items()]),
+            file_name="Шифр_Цезаря_Расшифровка.txt",
+            mime="text/plain",
+            key="dl_dec_selected"
+        )
