@@ -46,7 +46,7 @@ def decrypt(text: str, k: int=None):
 def validate_inputs(action: str, text: str, shift):
     ok = True
     if not text.strip():
-        st.error("Введите текст.")
+        st.error("Введите текст вручную или загрузите файл.")
         ok = False
     elif not any(isRussia(c) for c in text):
         st.warning("В тексте нет русских букв — результат может быть бессмысленным.")
@@ -61,103 +61,104 @@ def validate_inputs(action: str, text: str, shift):
             ok = False
     return ok
 
+
 def main_page():
     st.set_page_config(page_title="Шифр Цезаря", page_icon="🔑", layout="centered")
-    st.title("Шифр Цезаря")
+    st.title("🔑 Шифр Цезаря")
 
     ss = st.session_state
-    # --- INIT STATE ---
-    ss.setdefault("dec_variants", {})                       # накопленные расшифровки с выбранными ключами
-    ss.setdefault("last_text_for_variants", "")             # чтобы сбрасывать накопления при смене текста
-    ss.setdefault("enum_results", {})                       # результаты перебора всех ключей
-    ss.setdefault("enum_active", False)                     # показывать ли панель перебора
-    ss.setdefault("enum_text_snapshot", "")                 # текст, по которому считали перебор
-    ss.setdefault("enum_selected_key", 1)                   # выбранный ключ в selectbox
-    ss.setdefault("dec_use_step_prev", False)               # предыдущее состояние чекбокса "ручной шаг"
-    ss.setdefault("last_enc", {"text": "", "shift": None, "result": ""})  # последний валидный результат шифровки
-    ss.setdefault("enc_ready", False)                       # флаг разрешения показа результата шифровки
+    ss.setdefault("dec_variants", {})
+    ss.setdefault("last_text_for_variants", "")
+    ss.setdefault("enum_results", {})
+    ss.setdefault("enum_active", False)
+    ss.setdefault("enum_text_snapshot", "")
+    ss.setdefault("enum_selected_key", 1)
+    ss.setdefault("dec_use_step_prev", False)
+    ss.setdefault("last_enc", {"text": "", "shift": None, "result": ""})
+    ss.setdefault("enc_ready", False)
 
-    # --- INPUT: текст ---
-    user_text = st.text_area("Введите текст:").replace('ё', 'е').replace('Ё', 'Е')
+    # --- Загрузка файла ---
+    st.markdown("**Загрузите текстовый файл (.txt)** или введите текст вручную:")
+    uploaded_file = st.file_uploader("", type=["txt"], label_visibility="collapsed")
 
-    # Сброс накопленных вариантов при смене текста
+    if uploaded_file is not None:
+        try:
+            file_content = uploaded_file.read().decode("utf-8")
+        except UnicodeDecodeError:
+            file_content = uploaded_file.read().decode("windows-1251", errors="ignore")
+        st.info(f"Загружен файл: {uploaded_file.name}")
+    else:
+        file_content = ""
+
+    # --- Ввод текста ---
+    user_text = st.text_area("Введите текст:", file_content).replace('ё', 'е').replace('Ё', 'Е')
+
+    # --- Сбросы состояния ---
     if user_text != ss.last_text_for_variants:
         ss.dec_variants = {}
         ss.last_text_for_variants = user_text
-    # Сброс панели перебора при смене текста
     if user_text != ss.enum_text_snapshot:
         ss.enum_active = False
         ss.enum_results = {}
         ss.enum_selected_key = 1
         ss.enum_text_snapshot = user_text
-    # Не показываем старый шифр, если изменился текст
     if user_text != ss.last_enc.get("text", ""):
         ss.enc_ready = False
 
-    # --- Режим ---
+    # --- Действие ---
     action = st.selectbox("Выберите действие:", ("Шифровка", "Расшифровка"))
 
-    # Для расшифровки: мгновенное управление панелью перебора чекбоксом
     use_step = False
     if action == "Расшифровка":
         use_step = st.checkbox("Выбрать шаг вручную", value=False, key="dec_use_step")
         if use_step != ss.dec_use_step_prev:
             ss.dec_use_step_prev = use_step
             if use_step:
-                # Включили ручной шаг — мгновенно скрываем перебор
                 ss.enum_active = False
                 ss.enum_results = {}
                 ss.enum_selected_key = 1
 
-    # --- ФОРМА: атомарный сабмит + валидные значения шага через слайдер ---
+    # --- Форма ---
     with st.form("cipher_form", clear_on_submit=False):
         shift_val = None
         if action == "Шифровка":
-            shift_val = st.slider("Шаг (1–31)", min_value=1, max_value=31, value=1, step=1, key="enc_shift")
+            shift_val = st.slider("Шаг (1–31)", 1, 31, 1, key="enc_shift")
         elif action == "Расшифровка" and use_step:
-            shift_val = st.slider("Шаг (1–31)", min_value=1, max_value=31, value=1, step=1, key="dec_shift")
+            shift_val = st.slider("Шаг (1–31)", 1, 31, 1, key="dec_shift")
 
-        # live-валидация перед сабмитом
         text_ok = bool(user_text.strip())
         shift_needed = (action == "Шифровка") or (action == "Расшифровка" and use_step)
         shift_ok = (not shift_needed) or (shift_val is not None and 1 <= int(shift_val) <= 31)
 
-        submitted = st.form_submit_button(
-            action,
-            disabled=not (text_ok and shift_ok)
-        )
+        submitted = st.form_submit_button(action, disabled=not (text_ok and shift_ok))
 
-    # Кнопка очистки — только если есть накопленные варианты
+    # --- Очистка накопленных ---
     if action == "Расшифровка" and use_step and ss.dec_variants:
         if st.button("Очистить накопленные варианты"):
             ss.dec_variants = {}
             st.info("Список вариантов очищен.")
 
-    # --- ОБРАБОТКА сабмита формы ---
+    # --- Обработка ---
     if submitted:
         if not validate_inputs(action, user_text, shift_val if shift_needed else None):
             ss.enc_ready = False
             st.stop()
 
         if action == "Шифровка":
-            k = int(shift_val)  # slider гарантирует 1..31
+            k = int(shift_val)
             result = encryption(user_text, k)
             ss.last_enc = {"text": user_text, "shift": k, "result": result}
             ss.enc_ready = True
-
-        else:  # Расшифровка
+        else:
             if not use_step:
-                # Перебор всех ключей, включаем панель
                 ss.enum_results = decrypt(user_text, None)
                 ss.enum_active = True
                 ss.enum_selected_key = 1 if 1 in ss.enum_results else list(ss.enum_results.keys())[0]
             else:
-                k = int(shift_val)  # slider гарантирует 1..31
+                k = int(shift_val)
                 ss.dec_variants[k] = decrypt(user_text, k)
 
-    # --- ОТОБРАЖЕНИЕ РЕЗУЛЬТАТОВ (вне формы) ---
-
-    # Шифровка — только после валидного сабмита
+    # --- Вывод ---
     if action == "Шифровка" and ss.enc_ready and ss.last_enc["text"] == user_text:
         st.subheader("🔐 Зашифрованный текст:")
         st.code(ss.last_enc["result"], language="text")
@@ -168,9 +169,8 @@ def main_page():
             mime="text/plain",
         )
 
-    # Расшифровка перебором — только если ручной шаг выключен и перебор активирован
     if action == "Расшифровка" and not use_step and ss.enum_active and ss.enum_results:
-        st.subheader("🔍 Результаты расшифровки (перебор всех ключей):")
+        st.subheader("🔍 Результаты расшифровки (перебор ключей):")
         keys_list = list(ss.enum_results.keys())
         ss.enum_selected_key = st.selectbox(
             "Выберите ключ для просмотра:",
@@ -179,7 +179,6 @@ def main_page():
             format_func=lambda x: f"Ключ {x}",
             key="enum_selectbox_key"
         )
-        st.markdown(f"**Ключ {ss.enum_selected_key}:**")
         st.code(ss.enum_results[ss.enum_selected_key], language="text")
         st.download_button(
             "Скачать все варианты",
@@ -189,7 +188,6 @@ def main_page():
             key="dl_enum_all"
         )
 
-    # Расшифровка с выбранными шагами — показываем накопленные варианты
     if action == "Расшифровка" and use_step and ss.dec_variants:
         st.subheader("🔓 Расшифрованный текст (по выбранным ключам):")
         for k in sorted(ss.dec_variants.keys()):
