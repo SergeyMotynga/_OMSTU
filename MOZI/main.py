@@ -1,6 +1,7 @@
 from laboratory.lab_1.lab_1_the_ceaser_cipher import main_page as caesar_page
 from laboratory.lab_2.lab_2_the_affine_cipher import main_page as affine_page
 from laboratory.lab_3.lab_3_open_text_model import main_page as open_text_model_page
+from laboratory.lab_4.lab4_rsa import main_page as RSA_4
 import streamlit as st
 
 # Настройка страницы
@@ -13,7 +14,7 @@ st.sidebar.markdown("Выберите лабораторную работу:")
 # Выбор лабораторной работы
 lab_work = st.sidebar.radio(
     "Лабораторные работы:",
-    ["Шифр Цезаря", "Аффинный шифр", "Модель открытого текста"]
+    ["Шифр Цезаря", "Аффинный шифр", "Модель открытого текста", "RSA_4"]
 )
 
 # Отображение выбранной страницы
@@ -23,3 +24,5 @@ elif lab_work == "Аффинный шифр":
     affine_page()
 elif lab_work == "Модель открытого текста":
     open_text_model_page()
+elif lab_work == "RSA_4":
+    RSA_4()
