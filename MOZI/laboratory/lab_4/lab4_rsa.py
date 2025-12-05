@@ -4,7 +4,6 @@ import pandas as pd
 import io
 import math
 
-# ======== КОНСТАНТЫ И ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ========
 
 # Таблица кодировки русского алфавита
 ALPHABET = {
@@ -18,7 +17,6 @@ ALPHABET = {
 # Обратная таблица для декодирования
 REVERSE_ALPHABET = {v: k for k, v in ALPHABET.items()}
 
-# ======== МАТЕМАТИЧЕСКИЕ ФУНКЦИИ ========
 
 def extended_gcd(a, b):
     """Расширенный алгоритм Евклида для нахождения НОД и коэффициентов"""
@@ -41,7 +39,7 @@ def fast_pow(base, exp, mod):
     result = 1
     base %= mod
     while exp > 0:
-        if exp & 1:  # если exp нечетное
+        if exp & 1:  # если нечетное
             result = (result * base) % mod
         base = (base * base) % mod
         exp >>= 1  # exp = exp // 2
@@ -64,8 +62,6 @@ def is_prime(n):
         i += 6
     return True
 
-# ======== ФУНКЦИИ RSA ========
-
 def generate_keys(p, q, count=3):
     """Генерация count пар ключей (e, d) для заданных p и q"""
     n = p * q
@@ -77,7 +73,7 @@ def generate_keys(p, q, count=3):
         if len(keys) >= count:
             break
         e = random.randint(2, phi - 1)
-        if math.gcd(e, phi) == 1:  # Используем math.gcd
+        if math.gcd(e, phi) == 1:
             d = mod_inverse(e, phi)
             if d is not None:
                 keys.append((e, d))
@@ -98,95 +94,58 @@ def text_to_digits(text):
 def split_into_blocks(digit_str, n):
     """Разбиение цифровой строки на блоки, меньшие n"""
     blocks = []
-    current_block = ""
+    lengths = []
     
     i = 0
     while i < len(digit_str):
-        # Если текущий блок пустой
-        if not current_block:
-            # Проверяем, начинается ли с нуля (особый случай)
-            if digit_str[i] == '0':
-                # Переносим последнюю цифру из предыдущего блока
-                if blocks:
-                    last_block_str = str(blocks[-1])
-                    if len(last_block_str) > 1:
-                        moved_digit = last_block_str[-1]
-                        blocks[-1] = int(last_block_str[:-1])
-                        current_block = moved_digit
-                        continue
-                # Если это первый блок или предыдущий блок однозначный
-                current_block = digit_str[i]
+        current = digit_str[i]
+        i += 1
+        
+        # Пытаемся добавить следующие цифры, пока блок < n
+        while i < len(digit_str):
+            test = current + digit_str[i]
+            if int(test) < n:
+                current = test
                 i += 1
             else:
-                current_block = digit_str[i]
-                i += 1
-            continue
+                break
         
-        # Пробуем добавить следующую цифру
-        test_block = current_block + digit_str[i]
-        
-        if int(test_block) < n:
-            current_block = test_block
-        else:
-            # Текущий блок завершен
-            blocks.append(int(current_block))
-            current_block = digit_str[i]
-        
-        i += 1
-    
-    # Добавляем последний блок
-    if current_block:
-        blocks.append(int(current_block))
-    
-    # Сохраняем длины блоков для правильного восстановления
-    lengths = [len(str(b)) for b in blocks]
+        blocks.append(int(current))
+        lengths.append(len(current))
     
     return blocks, lengths
 
 def encrypt_message(text, e, n):
-    """Шифрование текста"""
-    # Преобразуем текст в цифры
+    """Шифрование текста - возвращает (шифрблоки, длины_блоков)"""
     digit_str = text_to_digits(text)
     if not digit_str:
         return [], []
     
-    # Разбиваем на блоки
     blocks, lengths = split_into_blocks(digit_str, n)
-    
-    # Шифруем каждый блок
     cipher_blocks = [fast_pow(block, e, n) for block in blocks]
     
     return cipher_blocks, lengths
 
-def decrypt_message(cipher_blocks, d, n, original_lengths=None):
-    """Расшифровка текста"""
-    # Расшифровываем каждый блок
-    plain_blocks = [fast_pow(block, d, n) for block in cipher_blocks]
-    
-    # Восстанавливаем цифровую строку
-    digits = ""
-    for i, block in enumerate(plain_blocks):
-        block_str = str(block)
-        if original_lengths and i < len(original_lengths):
-            # Восстанавливаем оригинальную длину
-            if len(block_str) < original_lengths[i]:
-                block_str = block_str.zfill(original_lengths[i])
-            elif len(block_str) > original_lengths[i]:
-                block_str = block_str[-original_lengths[i]:]
-        digits += block_str
+def digits_to_text(decrypted_numbers, lengths):
+    """Преобразование расшифрованных чисел обратно в текст с учетом длин блоков"""
+    digits = ''
+    for num, length in zip(decrypted_numbers, lengths):
+        s = str(num)
+        if len(s) > length:
+            s = s[-length:]
+        elif len(s) < length:
+            s = s.zfill(length)
+        digits += s
     
     # Преобразуем цифры обратно в текст
-    text = ""
+    text = ''
     i = 0
     while i + 1 < len(digits):
         code = int(digits[i:i+2])
-        if code in REVERSE_ALPHABET:
-            text += REVERSE_ALPHABET[code]
+        text += REVERSE_ALPHABET.get(code, '?')
         i += 2
     
     return text
-
-# ======== ОСНОВНАЯ ФУНКЦИЯ STREAMLIT ========
 
 def main_page():
     st.title("Лабораторная работа №4 — Шифрование RSA")
@@ -199,10 +158,10 @@ def main_page():
         st.session_state.rsa_n = None  
     if 'rsa_phi' not in st.session_state:
         st.session_state.rsa_phi = None  
-    if 'rsa_last_lengths' not in st.session_state:
-        st.session_state.rsa_last_lengths = None  
+    if 'rsa_lengths' not in st.session_state:
+        st.session_state.rsa_lengths = []  
     if 'rsa_ciphertext' not in st.session_state:
-        st.session_state.rsa_ciphertext = None  
+        st.session_state.rsa_ciphertext = []  
     
     st.markdown("---")
     
@@ -245,18 +204,17 @@ def main_page():
         if len(keys) < 3:
             st.warning(f"Удалось сгенерировать только {len(keys)} пар ключей")
         
-        # Сохраняем в состоянии - 
+        # Сохраняем в состоянии
         st.session_state.rsa_keys = keys
         st.session_state.rsa_n = n
         st.session_state.rsa_phi = phi
         
         st.success(f"Ключи сгенерированы! n = {n} (p×q = {p}×{q})")
     
-    # Отображение текущих ключей - 
+    # Отображение текущих ключей
     if st.session_state.rsa_keys:
         st.subheader("Текущие ключи:")
         key_data = []
-        # ИЗМЕНЕНО: st.session_state.rsa_keys вместо st.session_state.keys
         for i, (e, d) in enumerate(st.session_state.rsa_keys, 1):
             key_data.append({
                 "№": i,
@@ -280,7 +238,7 @@ def main_page():
     
     st.markdown("---")
     
-    # СЕКЦИЯ 2: ДОБАВЛЕНИЕ СВОЕГО КЛЮЧА - 
+    # СЕКЦИЯ 2: ДОБАВЛЕНИЕ СВОЕГО КЛЮЧА
     st.header("2. Добавить свой ключ")
     
     if st.session_state.rsa_n is not None:  
@@ -294,7 +252,7 @@ def main_page():
                                  help=f"Должно быть взаимно простым с φ(n) = {st.session_state.rsa_phi}")  
         
         if st.button("Добавить ключ"):
-            # Проверяем, что e взаимно просто с phi - ИСПОЛЬЗУЕМ math.gcd
+            # Проверяем, что e взаимно просто с phi
             if math.gcd(e_input, st.session_state.rsa_phi) != 1:  
                 st.error(f"e={e_input} не взаимно просто с φ(n)={st.session_state.rsa_phi}!")  
             else:
@@ -309,7 +267,7 @@ def main_page():
     
     st.markdown("---")
     
-    # СЕКЦИЯ 3: ШИФРОВАНИЕ - 
+    # СЕКЦИЯ 3: ШИФРОВАНИЕ
     st.header("3. Шифрование сообщения")
     
     if st.session_state.rsa_keys:  
@@ -324,23 +282,22 @@ def main_page():
         # Ввод текста
         text_to_encrypt = st.text_area("Введите текст для шифрования:",
                                       height=100,
-                                      placeholder="Введите текст на русском языке...")
+                                      placeholder="Введите текст на русском языке...",
+                                      key="encrypt_text")
         
         if st.button("Зашифровать", type="primary"):
             if not text_to_encrypt.strip():
                 st.warning("Введите текст для шифрования!")
             else:
-                # Преобразуем текст в цифры
-                digit_str = text_to_digits(text_to_encrypt)
+                # Шифруем сообщение
+                cipher_blocks, lengths = encrypt_message(text_to_encrypt, e_selected, st.session_state.rsa_n)
                 
-                # Разбиваем на блоки
-                blocks, lengths = split_into_blocks(digit_str, st.session_state.rsa_n)  
+                if not cipher_blocks:
+                    st.error("Не удалось зашифровать сообщение!")
+                    return
                 
-                # Шифруем
-                cipher_blocks = [fast_pow(block, e_selected, st.session_state.rsa_n) for block in blocks]
-                
-                # Сохраняем для возможной расшифровки
-                st.session_state.rsa_last_lengths = lengths
+                # Сохраняем для расшифровки
+                st.session_state.rsa_lengths = lengths
                 st.session_state.rsa_ciphertext = cipher_blocks
                 
                 # Отображаем результаты
@@ -348,18 +305,22 @@ def main_page():
                 
                 with col1:
                     st.subheader("Блоки открытого текста:")
-                    for i, block in enumerate(blocks, 1):
-                        st.write(f"Блок {i}: {block} (длина: {lengths[i-1]})")
+                    # Получаем оригинальные блоки для отображения
+                    digit_str = text_to_digits(text_to_encrypt)
+                    if digit_str:
+                        blocks, _ = split_into_blocks(digit_str, st.session_state.rsa_n)
+                        for i, block in enumerate(blocks, 1):
+                            st.write(f"Блок {i}: {block} (длина: {lengths[i-1] if i-1 < len(lengths) else '?'})")
                 
                 with col2:
                     st.subheader("Зашифрованные блоки:")
                     cipher_text = " ".join(map(str, cipher_blocks))
                     st.code(cipher_text, language="text")
-                    
                 
                 # Показываем цифровое представление
                 with st.expander("Подробности преобразования"):
                     st.write("**Текст в цифрах:**")
+                    digit_str = text_to_digits(text_to_encrypt)
                     st.code(digit_str, language="text")
                     
                     # Отображаем таблицу кодировки
@@ -381,7 +342,8 @@ def main_page():
         key_options_dec = [f"Ключ {i}: d={d}" for i, (e, d) in enumerate(st.session_state.rsa_keys, 1)]
         selected_key_idx_dec = st.selectbox("Выберите ключ для расшифровки:", 
                                            range(len(key_options_dec)),
-                                           format_func=lambda x: key_options_dec[x])
+                                           format_func=lambda x: key_options_dec[x],
+                                           key="decrypt_key_select")
         
         e_selected_dec, d_selected_dec = st.session_state.rsa_keys[selected_key_idx_dec]
         
@@ -390,7 +352,8 @@ def main_page():
                                    height=100,
                                    placeholder="Например: 1234 5678 9012",
                                    value=" ".join(map(str, st.session_state.rsa_ciphertext))
-                                   if st.session_state.rsa_ciphertext else "")
+                                   if st.session_state.rsa_ciphertext else "",
+                                   key="cipher_input")
         
         if st.button("Расшифровать", type="primary"):
             if not cipher_input.strip():
@@ -400,27 +363,50 @@ def main_page():
                     # Парсим шифртекст
                     cipher_blocks = [int(x.strip()) for x in cipher_input.split()]
                     
-                    lengths = None
+                    # Проверяем, есть ли сохраненные длины
+                    if not st.session_state.rsa_lengths:
+                        st.error("Нет сохраненных длин блоков! Сначала зашифруйте сообщение.")
+                        return
                     
-                    # Расшифровываем
-                    decrypted_text = decrypt_message(cipher_blocks, d_selected_dec, 
-                                                    st.session_state.rsa_n, lengths)
+                    # Используем сохраненные длины блоков
+                    lengths = st.session_state.rsa_lengths
+                    
+                    # Проверяем соответствие количества блоков и длин
+                    if len(lengths) != len(cipher_blocks):
+                        st.warning(f"⚠️ Количество блоков ({len(cipher_blocks)}) не совпадает с сохраненными длинами ({len(lengths)}).")
+                        st.warning("Используются первые длины для доступных блоков.")
+                        # Используем минимальное количество
+                        min_len = min(len(lengths), len(cipher_blocks))
+                        lengths = lengths[:min_len]
+                        cipher_blocks = cipher_blocks[:min_len]
+                    
+                    # Расшифровываем блоки
+                    decrypted_blocks = [fast_pow(block, d_selected_dec, st.session_state.rsa_n) 
+                                       for block in cipher_blocks]
+                    
+                    # Преобразуем в текст с использованием длин
+                    decrypted_text = digits_to_text(decrypted_blocks, lengths)
                     
                     # Отображаем результат
                     st.subheader("Расшифрованный текст:")
                     st.success(decrypted_text)
                     
-                    # Показываем информацию
+                    # Показываем подробности
                     with st.expander("Подробности расшифровки"):
                         st.write(f"**Использованные параметры:**")
                         st.write(f"- Закрытый ключ d: {d_selected_dec}")
                         st.write(f"- Модуль n: {st.session_state.rsa_n}")
                         st.write(f"- Количество блоков: {len(cipher_blocks)}")
+                        st.write(f"- Длины блоков: {lengths}")
                         
-                        if lengths:
-                            st.write(f"- Длины блоков: {lengths}")
-                        else:
-                            st.write("- Длины блоков: автоматическое определение")
+                        st.write("**Расшифрованные числа:**")
+                        for i, (num, length) in enumerate(zip(decrypted_blocks, lengths), 1):
+                            s = str(num)
+                            if len(s) > length:
+                                s = s[-length:]
+                            elif len(s) < length:
+                                s = s.zfill(length)
+                            st.write(f"Блок {i}: {num} → '{s}' (длина: {length})")
                         
                 except ValueError as e:
                     st.error(f"Ошибка ввода данных: {e}")
@@ -428,3 +414,7 @@ def main_page():
                     st.error(f"Ошибка при расшифровке: {e}")
     else:
         st.warning("Сначала сгенерируйте ключи (раздел 1)")
+
+# Запуск приложения
+if __name__ == "__main__":
+    main_page()
