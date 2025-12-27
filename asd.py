@@ -1,13 +1,4 @@
-import random
-
-ALPHABET = {
-    'А': 10, 'Б': 11, 'В': 12, 'Г': 13, 'Д': 14, 'Е': 15, 'Ж': 16, 'З': 17, 'И': 18, 'Й': 19,
-    'К': 20, 'Л': 21, 'М': 22, 'Н': 23, 'О': 24, 'П': 25, 'Р': 26, 'С': 27, 'Т': 28, 'У': 29,
-    'Ф': 30, 'Х': 31, 'Ц': 32, 'Ч': 33, 'Ш': 34, 'Щ': 35, 'Ъ': 36, 'Ы': 37, 'Ь': 38, 'Э': 39,
-    'Ю': 40, 'Я': 41, ' ': 99
-}
-
-REVERSE_ALPHABET = {v: k for k, v in ALPHABET.items()}
+import math
 
 def extended_gcd(a, b):
     if a == 0:
@@ -33,213 +24,93 @@ def fast_pow(base, exp, mod):
         exp >>= 1
     return result
 
-def generate_random_keys(p, q, count=3):
-    n = p * q
-    phi = (p - 1) * (q - 1)
-    keys = []
-    attempts = 0
-    while len(keys) < count and attempts < 10000:
-        e = random.randint(2, phi - 1)
-        if extended_gcd(e, phi)[0] == 1:
-            d = mod_inverse(e, phi)
-            if d is not None:
-                keys.append((e, d))
-        attempts += 1
-    return keys, n, phi
+def generate_primes(limit):
+    if limit < 2:
+        return []
+    sieve = [True] * (limit + 1)
+    sieve[0] = sieve[1] = False
+    for i in range(2, int(math.sqrt(limit)) + 1):
+        if sieve[i]:
+            for j in range(i * i, limit + 1, i):
+                sieve[j] = False
+    return [i for i in range(2, limit + 1) if sieve[i]]
 
-def text_to_digits(text):
-    text = text.upper()
-    result = ''
-    for ch in text:
-        if ch in ALPHABET:
-            result += f"{ALPHABET[ch]:02d}" if ALPHABET[ch] < 100 else '99'
-    return result
+def advanced_factorize(n):
+    if n % 2 == 0:
+        return 2, n // 2
+    if n % 3 == 0:
+        return 3, n // 3
+    if n % 5 == 0:
+        return 5, n // 5
 
-def split_into_blocks(digit_string, n):
-    blocks = []
-    current = ''
+    primes = generate_primes(100000)
+
     i = 0
-    while i < len(digit_string):
-        if not current:
-            if digit_string[i] == '0' and blocks:
-                last = str(blocks[-1])
-                moved = last[-1]
-                blocks[-1] = int(last[:-1])
-                current = moved
-            else:
-                current = digit_string[i]
-                i += 1
-                continue
-        temp = current + digit_string[i]
-        if int(temp) >= n:
-            blocks.append(int(current))
-            current = digit_string[i]
-        else:
-            current = temp
-        i += 1
-    if current:
-        blocks.append(int(current))
-    lengths = [len(str(b)) for b in blocks]
-    return list(zip(blocks, lengths))
-
-def encrypt_blocks(blocks_with_len, e, n):
-    return [fast_pow(m, e, n) for m, _ in blocks_with_len]
-
-def decrypt_blocks(cipher_blocks, d, n):
-    return [fast_pow(c, d, n) for c in cipher_blocks]
-
-def digits_to_text(decrypted_numbers, lengths):
-    digits = ''
-    for num, length in zip(decrypted_numbers, lengths):
-        s = str(num)
-        if len(s) > length:
-            s = s[-length:]
-        elif len(s) < length:
-            s = s.zfill(length)
-        digits += s
-    text = ''
-    i = 0
-    while i + 1 < len(digits):
-        code = int(digits[i:i+2])
-        text += REVERSE_ALPHABET.get(code, '?')
-        i += 2
-    return text
-
-def main():
-    saved_keys = []
-    n_global = None
-    phi_global = None
-    last_block_lengths = None
-
-    while True:
-        print("\n")
-        print("---МЕНЮ RSA---")
-        print("1. Сгенерировать ключи по p и q (3 случайные пары)")
-        print("2. Добавить свой ключ вручную (вводите только e)")
-        print("3. Зашифровать сообщение")
-        print("4. Расшифровать сообщение")
-        print("0. Выход")
-
-        choice = input("Выберите пункт: ").strip()
-
-        if choice == '1':
-            try:
-                p = int(input("Введите простое число p: "))
-                q = int(input("Введите простое число q: "))
-                if p == q or p <= 1 or q <= 1:
-                    print("p и q должны быть разными простыми числами > 1")
-                    continue
-            except ValueError:
-                print("Введите целые числа!")
-                continue
-
-            keys, n_global, phi_global = generate_random_keys(p, q, count=3)
-            if len(keys) < 3:
-                print("Не удалось найти 3 подходящих ключа. Попробуйте другие p и q.")
-                continue
-            saved_keys = keys[:]
-            print(f"\nn = {n_global} (p × q = {p} × {q})")
-            print("Сгенерированные случайные пары ключей:")
-            for i, (e, d) in enumerate(saved_keys, 1):
-                print(f"{i}. e = {e:<12} d = {d}")
-
-        elif choice == '2':
-            if n_global is None or phi_global is None:
-                print("Сначала сгенерируйте ключи (пункт 1)!")
-                continue
-            while True:
-                try:
-                    e = int(input("Введите e (открытый ключ): "))
-                    if e <= 1 or e >= phi_global:
-                        print(f"e должен быть в диапазоне от 2 до {phi_global-1}")
-                        continue
-                except ValueError:
-                    print("Введите целое число!")
-                    continue
-
-                if extended_gcd(e, phi_global)[0] != 1:
-                    print("e должно быть взаимно простым с φ(n)!")
-                    continue
-
-                d = mod_inverse(e, phi_global)
-                if d is None:
-                    print("Не удалось вычислить d. Попробуйте другое e.")
-                    continue
-
-                saved_keys.append((e, d))
-                print(f"Ключ успешно добавлен!")
-                print(f"   e = {e}")
-                print(f"   d = {d} вычислено автоматически")
-                break
-
-        elif choice == '3':
-            if not saved_keys or n_global is None:
-                print("Сначала сгенерируйте ключи!")
-                continue
-            text = input("Введите текст для шифрования: ")
-            digit_str = text_to_digits(text)
-            if not digit_str:
-                print("Текст пуст или содержит недопустимые символы")
-                continue
-            blocks_with_len = split_into_blocks(digit_str, n_global)
-            print("\nБлоки открытого текста:")
-            for m, _ in blocks_with_len:
-                print(m)
-            print("\nВыберите ключ для шифрования:")
-            for i, (e, _) in enumerate(saved_keys, 1):
-                print(f"{i}. e = {e}")
-            try:
-                idx = int(input("Номер ключа: ")) - 1
-                e = saved_keys[idx][0]
-            except:
-                print("Неверный номер!")
-                continue
-            ciphertext = encrypt_blocks(blocks_with_len, e, n_global)
-            last_block_lengths = [l for _, l in blocks_with_len]
-            print("\nЗашифрованные блоки:")
-            print(' '.join(map(str, ciphertext)))
-
-        elif choice == '4':
-            if not saved_keys or n_global is None:
-                print("Сначала сгенерируйте ключи!")
-                continue
-            try:
-                cipher_str = input("Введите зашифрованные блоки через пробел: ")
-                ciphertext = [int(x) for x in cipher_str.split()]
-            except:
-                print("Ошибка ввода блоков!")
-                continue
-            print("\nВыберите ключ для расшифровки:")
-            for i, (_, d) in enumerate(saved_keys, 1):
-                print(f"{i}. d = {d}")
-            try:
-                idx = int(input("Номер ключа: ")) - 1
-                d = saved_keys[idx][1]
-            except:
-                print("Неверный номер!")
-                continue
-            if last_block_lengths and len(last_block_lengths) == len(ciphertext):
-                lengths = last_block_lengths
-                print("Используются сохранённые длины блоков")
-            else:
-                print("Введите длины исходных блоков через пробел:")
-                try:
-                    lengths = [int(x) for x in input().split()]
-                    if len(lengths) != len(ciphertext):
-                        raise ValueError
-                except:
-                    print("Количество длин не совпадает!")
-                    continue
-            plaintext_nums = decrypt_blocks(ciphertext, d, n_global)
-            result = digits_to_text(plaintext_nums, lengths)
-            print("\nРасшифрованный текст:")
-            print(result)
-
-        elif choice == '0':
-            print("До свидания!")
+    while i + 2 < len(primes):
+        q1, q2, q3 = primes[i], primes[i+1], primes[i+2]
+        qs = q1 * q2 * q3
+        if qs * qs > n:
             break
-        else:
-            print("Неверный пункт меню!")
+        d = math.gcd(n, qs)
+        if d > 1:
+            return d, n // d
+        i += 3
 
-if __name__ == "__main__":
-    main()
+    for p in primes:
+        if p * p > n:
+            break
+        if n % p == 0:
+            return p, n // p
+
+    return None, None
+
+REV = {10:'А',11:'Б',12:'В',13:'Г',14:'Д',15:'Е',16:'Ж',17:'З',18:'И',19:'Й',
+       20:'К',21:'Л',22:'М',23:'Н',24:'О',25:'П',26:'Р',27:'С',28:'Т',29:'У',
+       30:'Ф',31:'Х',32:'Ц',33:'Ч',34:'Ш',35:'Щ',36:'Ъ',37:'Ы',38:'Ь',39:'Э',
+       40:'Ю',41:'Я',99:' '}
+
+print("КРИПТОАНАЛИЗ ШИФРА RSA — взлом через факторизацию n\n")
+
+e, n = map(int, input("Введите e и n через пробел: ").split())
+cipher = list(map(int, input("Введите зашифрованные блоки C через пробел: ").split()))
+
+print("Факторизация n (улучшенный метод пробного деления)...")
+p, q = advanced_factorize(n)
+if not p:
+    print("Не удалось факторизовать n — шифр устойчив к атаке.")
+    exit()
+
+print(f"Найдено: p = {p}, q = {q}")
+
+phi = (p - 1) * (q - 1)
+d = mod_inverse(e, phi)
+if d is None:
+    print("Ошибка: не удалось найти d")
+    exit()
+
+print(f"φ(n) = {phi}")
+print(f"Закрытый ключ d = {d}")
+
+print("\nРасшифровка блоков...")
+plain_blocks = [fast_pow(c, d, n) for c in cipher]
+
+print("Числовые блоки открытого текста:")
+print(' '.join(map(str, plain_blocks)))
+
+all_digits = ''.join(str(num) for num in plain_blocks)
+text = ""
+i = 0
+while i + 1 < len(all_digits):
+    code = int(all_digits[i:i+2])
+    text += REV.get(code, '?')
+    i += 2
+
+print("\nИсходное сообщение:")
+print(text)
+print("\nВзлом завершён успешно!")
+
+# e,n: 251 46883
+# C: 12351
+
+# 7 22213
+# 5891 9958 20480 8283 5963 5690

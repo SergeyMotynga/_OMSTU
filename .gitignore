@@ -4,3 +4,5 @@ pycaret_env
 pyvenv.cfg
 __pycache__
 .venv
+WEB
+venv
