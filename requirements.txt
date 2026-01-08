@@ -1,6 +1,12 @@
-numpy==2.3.4
+numpy==2.3.0
 pandas==2.3.3
 seaborn==0.13.2
-matplotlib==3.10.7
+matplotlib==3.9.3
 scikit-learn>=1.4.2
 statsmodels>=0.13.3
+umap-learn>=0.5.5
+pyod>=1.1.0
+
+
+--extra-index-url https://test.pypi.org/simple/
+AutomationML[all]
