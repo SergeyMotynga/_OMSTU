@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="640" viewBox="0 0 980 640">
+  <rect x="0" y="0" width="980" height="640" fill="white"/>
+  <text x="490" y="34" text-anchor="middle" font-size="24" font-family="Arial" fill="#1f2933">Исходные точки варианта 17</text>
+  <line x1="207.55" y1="68.00" x2="207.55" y2="564.00" stroke="#eceff3" stroke-width="1"/>
+  <text x="207.55" y="586.00" text-anchor="middle" font-size="12" font-family="Arial" fill="#4b5563">0,5</text>
+  <line x1="354.45" y1="68.00" x2="354.45" y2="564.00" stroke="#eceff3" stroke-width="1"/>
+  <text x="354.45" y="586.00" text-anchor="middle" font-size="12" font-family="Arial" fill="#4b5563">1,0</text>
+  <line x1="501.34" y1="68.00" x2="501.34" y2="564.00" stroke="#eceff3" stroke-width="1"/>
+  <text x="501.34" y="586.00" text-anchor="middle" font-size="12" font-family="Arial" fill="#4b5563">1,5</text>
+  <line x1="648.23" y1="68.00" x2="648.23" y2="564.00" stroke="#eceff3" stroke-width="1"/>
+  <text x="648.23" y="586.00" text-anchor="middle" font-size="12" font-family="Arial" fill="#4b5563">2,0</text>
+  <line x1="795.12" y1="68.00" x2="795.12" y2="564.00" stroke="#eceff3" stroke-width="1"/>
+  <text x="795.12" y="586.00" text-anchor="middle" font-size="12" font-family="Arial" fill="#4b5563">2,5</text>
+  <line x1="942.02" y1="68.00" x2="942.02" y2="564.00" stroke="#eceff3" stroke-width="1"/>
+  <text x="942.02" y="586.00" text-anchor="middle" font-size="12" font-family="Arial" fill="#4b5563">3,0</text>
+  <line x1="86.00" y1="507.08" x2="944.00" y2="507.08" stroke="#eceff3" stroke-width="1"/>
+  <text x="74.00" y="511.08" text-anchor="end" font-size="12" font-family="Arial" fill="#4b5563">−2,0</text>
+  <line x1="86.00" y1="388.87" x2="944.00" y2="388.87" stroke="#eceff3" stroke-width="1"/>
+  <text x="74.00" y="392.87" text-anchor="end" font-size="12" font-family="Arial" fill="#4b5563">0,0</text>
+  <line x1="86.00" y1="270.67" x2="944.00" y2="270.67" stroke="#eceff3" stroke-width="1"/>
+  <text x="74.00" y="274.67" text-anchor="end" font-size="12" font-family="Arial" fill="#4b5563">2,0</text>
+  <line x1="86.00" y1="152.47" x2="944.00" y2="152.47" stroke="#eceff3" stroke-width="1"/>
+  <text x="74.00" y="156.47" text-anchor="end" font-size="12" font-family="Arial" fill="#4b5563">4,0</text>
+  <line x1="86.00" y1="388.87" x2="944.00" y2="388.87" stroke="#5c6670" stroke-width="1.4"/>
+  <line x1="86.00" y1="68.00" x2="86.00" y2="564.00" stroke="#5c6670" stroke-width="1.4"/>
+  <circle cx="125.00" cy="516.00" r="4.5" fill="#111827"/>
+  <text x="132.00" y="509.00" font-size="11" font-family="Arial" fill="#111827">P0</text>
+  <circle cx="222.54" cy="463.93" r="4.5" fill="#111827"/>
+  <text x="229.54" y="456.93" font-size="11" font-family="Arial" fill="#111827">P1</text>
+  <circle cx="320.07" cy="400.75" r="4.5" fill="#111827"/>
+  <text x="327.07" y="393.75" font-size="11" font-family="Arial" fill="#111827">P2</text>
+  <circle cx="417.61" cy="343.30" r="4.5" fill="#111827"/>
+  <text x="424.61" y="336.30" font-size="11" font-family="Arial" fill="#111827">P3</text>
+  <circle cx="515.15" cy="292.77" r="4.5" fill="#111827"/>
+  <text x="522.15" y="285.77" font-size="11" font-family="Arial" fill="#111827">P4</text>
+  <circle cx="612.39" cy="242.36" r="4.5" fill="#111827"/>
+  <text x="619.39" y="235.36" font-size="11" font-family="Arial" fill="#111827">P5</text>
+  <circle cx="709.93" cy="196.85" r="4.5" fill="#111827"/>
+  <text x="716.93" y="189.85" font-size="11" font-family="Arial" fill="#111827">P6</text>
+  <circle cx="807.46" cy="161.86" r="4.5" fill="#111827"/>
+  <text x="814.46" y="154.86" font-size="11" font-family="Arial" fill="#111827">P7</text>
+  <circle cx="905.00" cy="116.00" r="4.5" fill="#111827"/>
+  <text x="912.00" y="109.00" font-size="11" font-family="Arial" fill="#111827">P8</text>
+  <text x="954.00" y="393.87" font-size="16" font-family="Arial" fill="#1f2933">x</text>
+  <text x="94.00" y="54.00" font-size="16" font-family="Arial" fill="#1f2933">y</text>
+</svg>

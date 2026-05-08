@@ -46,7 +46,7 @@ for n in SIZES:
     t_iter = measure_time(fib_iterative, n)
     times_recursive.append(t_rec)
     times_iterative.append(t_iter)
-    print(f"  n={n:>2}: рекурсия={t_rec:.6f}мс  итерация={t_iter:.6f}мс")
+    print(f"n={n:>2}: рекурсия={t_rec:.6f}мс  итерация={t_iter:.6f}мс")
 
 print("\nЗначения Фибоначчи:")
 for n in SIZES:

@@ -101,7 +101,6 @@ def generate_all_inversion(n):
     return result
 
 
-# ── Демонстрация (n=4) ───────────────────────────────────────
 
 n_demo = 4
 
@@ -134,7 +133,6 @@ for p in perms_inv:
     print(" ", p)
 
 
-# ── Замер времени одного шага ─────────────────────────────────
 
 SIZES   = list(range(1, 10001, 50))
 REPEATS = 5
@@ -177,10 +175,9 @@ for idx, n in enumerate(SIZES):
     if (idx + 1) % 50 == 0:
         print(f"  n={n}: готово")
 
-print("  Замер завершён\n")
+print("Замер завершён\n")
 
 
-# ── График ───────────────────────────────────────────────────
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 fig.suptitle(
