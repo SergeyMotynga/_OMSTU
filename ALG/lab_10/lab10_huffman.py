@@ -221,7 +221,7 @@ def print_code_table(frequencies: Mapping[str, int], codes: Mapping[str, str]) -
 def print_demo() -> None:
     """Демонстрация кодирования и восстановления текста."""
     print("Демонстрационный пример")
-    text = "алгоритмы и анализ сложности"
+    text = "В дискретной задаче о рюкзаке в роли предметов для непрерывной задачи больше подходят такие товары, как золотой песок"
     frequencies, root, codes, encoded_text = huffman_encode(text)
     decoded_text = decode_text(encoded_text, root)
 
