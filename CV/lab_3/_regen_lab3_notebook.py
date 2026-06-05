@@ -83,7 +83,7 @@ cells.append(
 Требуется:
 - Сгенерировать шумы `salt`, `pepper`, `gaussian` с разными параметрами.
 - Наложить шум на изображение и отобразить результаты.
-- Применить фильтры: Гаусса, Box filter, медианный.
+- Реализовать вручную и применить фильтры: Гаусса, Box filter, медианный.
 - Для фильтра Гаусса использовать несколько параметров.
 """
     )
@@ -142,11 +142,76 @@ def add_gaussian_noise(image, sigma=10.0, mean=0.0, rng=None):
     return np.clip(noisy, 0, 255).astype(np.uint8)
 
 
-def gaussian_blur_uint8(image, sigma):
-    k = int(2 * round(3 * sigma) + 1)
-    if k % 2 == 0:
-        k += 1
-    return cv2.GaussianBlur(image, (k, k), sigmaX=sigma, sigmaY=sigma)
+def to_uint8(image):
+    return np.clip(np.rint(image), 0, 255).astype(np.uint8)
+
+
+def validate_kernel_size(kernel_size):
+    if kernel_size < 1:
+        raise ValueError("Размер ядра должен быть положительным")
+    if kernel_size % 2 == 0:
+        raise ValueError("Размер ядра должен быть нечетным")
+
+
+def convolve1d_reflect(image, kernel, axis):
+    kernel = np.asarray(kernel, dtype=np.float32)
+    radius = len(kernel) // 2
+    gray_input = image.ndim == 2
+    src = image[..., None].astype(np.float32) if gray_input else image.astype(np.float32)
+    h, w = src.shape[:2]
+
+    pad_width = [(0, 0), (0, 0), (0, 0)]
+    pad_width[axis] = (radius, radius)
+    padded = np.pad(src, pad_width, mode="reflect")
+
+    result = np.zeros_like(src, dtype=np.float32)
+    for offset, weight in enumerate(kernel):
+        if axis == 0:
+            result += weight * padded[offset:offset + h, :, :]
+        else:
+            result += weight * padded[:, offset:offset + w, :]
+
+    return result[..., 0] if gray_input else result
+
+
+def box_filter_custom(image, kernel_size=5):
+    validate_kernel_size(kernel_size)
+    kernel = np.ones(kernel_size, dtype=np.float32) / kernel_size
+    filtered = convolve1d_reflect(image, kernel, axis=0)
+    filtered = convolve1d_reflect(filtered, kernel, axis=1)
+    return to_uint8(filtered)
+
+
+def gaussian_kernel1d(sigma):
+    if sigma <= 0:
+        raise ValueError("sigma должен быть положительным")
+    radius = max(1, int(np.ceil(3 * sigma)))
+    x = np.arange(-radius, radius + 1, dtype=np.float32)
+    kernel = np.exp(-(x ** 2) / (2 * sigma ** 2))
+    return kernel / kernel.sum()
+
+
+def gaussian_filter_custom(image, sigma):
+    kernel = gaussian_kernel1d(sigma)
+    filtered = convolve1d_reflect(image, kernel, axis=0)
+    filtered = convolve1d_reflect(filtered, kernel, axis=1)
+    return to_uint8(filtered)
+
+
+def median_filter_custom(image, kernel_size=5):
+    validate_kernel_size(kernel_size)
+    radius = kernel_size // 2
+    gray_input = image.ndim == 2
+    src = image[..., None] if gray_input else image
+    padded = np.pad(src, ((radius, radius), (radius, radius), (0, 0)), mode="reflect")
+    windows = np.lib.stride_tricks.sliding_window_view(
+        padded,
+        (kernel_size, kernel_size),
+        axis=(0, 1),
+    )
+    filtered = np.median(windows, axis=(-2, -1))
+    filtered = to_uint8(filtered)
+    return filtered[..., 0] if gray_input else filtered
 """
     )
 )
@@ -198,9 +263,9 @@ def apply_denoise_set(noisy_image):
     gauss_sigmas = [0.8, 1.5, 2.5]
     results = [("Шумное изображение", noisy_image)]
     for s in gauss_sigmas:
-        results.append((f"Фильтр Гаусса, sigma={s}", gaussian_blur_uint8(noisy_image, sigma=s)))
-    results.append(("Box filter 5x5", cv2.blur(noisy_image, (5, 5))))
-    results.append(("Медианный фильтр 5x5", cv2.medianBlur(noisy_image, 5)))
+        results.append((f"Собственный фильтр Гаусса, sigma={s}", gaussian_filter_custom(noisy_image, sigma=s)))
+    results.append(("Собственный Box filter 5x5", box_filter_custom(noisy_image, kernel_size=5)))
+    results.append(("Собственный медианный фильтр 5x5", median_filter_custom(noisy_image, kernel_size=5)))
     return results
 
 
@@ -455,7 +520,7 @@ cells.append(
 ## Вывод
 
 - Сгенерированы и визуализированы шумы `salt`, `pepper`, `gaussian` с несколькими параметрами.
-- Применены фильтры Гаусса (с разными `sigma`), Box filter и медианный фильтр.
+- Реализованы вручную и применены фильтры Гаусса (с разными `sigma`), Box filter и медианный фильтр.
 - Реализован пошаговый Canny: `Ix`, `Iy`, магнитуда, подавление немаксимумов, двойной порог, hysteresis.
 - Реализован `detect_harris(img, ...)` и показаны найденные углы на изображении.
 """
