@@ -1,0 +1,44 @@
+{
+  "variant": 17,
+  "geometry_variant_assumption": 5,
+  "seed": 17052026,
+  "integral": {
+    "n": 200000,
+    "volume": 3.0,
+    "estimate": 12.497553269045522,
+    "exact": 12.5,
+    "absolute_error": 0.0024467309544782267,
+    "relative_error_percent": 0.019573847635825814,
+    "standard_error": 0.008468790452170692
+  },
+  "linear_system": {
+    "trajectories": 120000,
+    "steps": 50,
+    "monte_carlo": [
+      1.3212184003824674,
+      0.6070610354635386
+    ],
+    "exact": [
+      1.3214285714285714,
+      0.6071428571428571
+    ],
+    "absolute_errors": [
+      0.00021017104610399073,
+      8.182167931847228e-05
+    ],
+    "standard_errors": [
+      0.0005906287032095705,
+      0.0007090751910826207
+    ]
+  },
+  "area": {
+    "geometry_variant": 5,
+    "n": 150000,
+    "rectangle_area": 16.0,
+    "inside_count": 32822,
+    "estimate": 3.5010133333333333,
+    "reference": 3.496313404908087,
+    "absolute_error": 0.004699928425246469,
+    "relative_error_percent": 0.13442526115218278
+  }
+}

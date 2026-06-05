@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="980" height="620" viewBox="0 0 980 620">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="490.0" y="34" text-anchor="middle" font-size="24" font-family="Arial" fill="#1f2933">Краевая задача: сеточное решение</text>
+<line x1="119.63" y1="74" x2="119.63" y2="542" stroke="#e6edf3"/>
+<text x="119.63" y="564" text-anchor="middle" font-size="12" font-family="Arial" fill="#415166">0,5</text>
+<line x1="251.42" y1="74" x2="251.42" y2="542" stroke="#e6edf3"/>
+<text x="251.42" y="564" text-anchor="middle" font-size="12" font-family="Arial" fill="#415166">0,55</text>
+<line x1="383.21" y1="74" x2="383.21" y2="542" stroke="#e6edf3"/>
+<text x="383.21" y="564" text-anchor="middle" font-size="12" font-family="Arial" fill="#415166">0,6</text>
+<line x1="515.00" y1="74" x2="515.00" y2="542" stroke="#e6edf3"/>
+<text x="515.00" y="564" text-anchor="middle" font-size="12" font-family="Arial" fill="#415166">0,65</text>
+<line x1="646.79" y1="74" x2="646.79" y2="542" stroke="#e6edf3"/>
+<text x="646.79" y="564" text-anchor="middle" font-size="12" font-family="Arial" fill="#415166">0,7</text>
+<line x1="778.58" y1="74" x2="778.58" y2="542" stroke="#e6edf3"/>
+<text x="778.58" y="564" text-anchor="middle" font-size="12" font-family="Arial" fill="#415166">0,75</text>
+<line x1="910.37" y1="74" x2="910.37" y2="542" stroke="#e6edf3"/>
+<text x="910.37" y="564" text-anchor="middle" font-size="12" font-family="Arial" fill="#415166">0,8</text>
+<line x1="88" y1="486.08" x2="942" y2="486.08" stroke="#e6edf3"/>
+<text x="74" y="490.08" text-anchor="end" font-size="12" font-family="Arial" fill="#415166">−11,9</text>
+<line x1="88" y1="424.17" x2="942" y2="424.17" stroke="#e6edf3"/>
+<text x="74" y="428.17" text-anchor="end" font-size="12" font-family="Arial" fill="#415166">−11,8</text>
+<line x1="88" y1="362.25" x2="942" y2="362.25" stroke="#e6edf3"/>
+<text x="74" y="366.25" text-anchor="end" font-size="12" font-family="Arial" fill="#415166">−11,7</text>
+<line x1="88" y1="300.34" x2="942" y2="300.34" stroke="#e6edf3"/>
+<text x="74" y="304.34" text-anchor="end" font-size="12" font-family="Arial" fill="#415166">−11,6</text>
+<line x1="88" y1="238.43" x2="942" y2="238.43" stroke="#e6edf3"/>
+<text x="74" y="242.43" text-anchor="end" font-size="12" font-family="Arial" fill="#415166">−11,5</text>
+<line x1="88" y1="176.51" x2="942" y2="176.51" stroke="#e6edf3"/>
+<text x="74" y="180.51" text-anchor="end" font-size="12" font-family="Arial" fill="#415166">−11,4</text>
+<line x1="88" y1="114.60" x2="942" y2="114.60" stroke="#e6edf3"/>
+<text x="74" y="118.60" text-anchor="end" font-size="12" font-family="Arial" fill="#415166">−11,3</text>
+<line x1="88" y1="542" x2="942" y2="542" stroke="#5c6b7a" stroke-width="1.4"/>
+<line x1="88" y1="74" x2="88" y2="542" stroke="#5c6b7a" stroke-width="1.4"/>
+<text x="952" y="547" font-size="16" font-family="Arial" fill="#1f2933">x</text>
+<text x="96" y="58" font-size="16" font-family="Arial" fill="#1f2933">y</text>
+<line x1="100" y1="92" x2="130" y2="92" stroke="#0b7285" stroke-width="2.8" stroke-linecap="round"/>
+<text x="140" y="96" font-size="12" font-family="Arial" fill="#1f2933">разностное решение</text>
+<polyline points="119.63,496.71 383.21,434.80 646.79,305.03 910.37,119.29" fill="none" stroke="#0b7285" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="119.63" cy="496.71" r="4.2" fill="#111827"/>
+<text x="125.63" y="489.71" font-size="11" font-family="Arial" fill="#111827">x1</text>
+<circle cx="383.21" cy="434.80" r="4.2" fill="#111827"/>
+<text x="389.21" y="427.80" font-size="11" font-family="Arial" fill="#111827">x2</text>
+<circle cx="646.79" cy="305.03" r="4.2" fill="#111827"/>
+<text x="652.79" y="298.03" font-size="11" font-family="Arial" fill="#111827">x3</text>
+<circle cx="910.37" cy="119.29" r="4.2" fill="#111827"/>
+<text x="916.37" y="112.29" font-size="11" font-family="Arial" fill="#111827">x4</text>
+</svg>
